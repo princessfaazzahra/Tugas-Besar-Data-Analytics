@@ -1,0 +1,64 @@
+[2026-05-26 22:54:57] ============================================================
+[2026-05-26 22:54:57]   PIPELINE TAHAP O (OBTAIN) — Mulai
+[2026-05-26 22:54:57] ============================================================
+[2026-05-26 22:54:57]   Base dir : C:\Users\Mrs. Azzahra\Documents\semester 6\Data Analytics\Tubes\Tugas-Besar-Data-Analytics
+[2026-05-26 22:54:57]   Raw data : C:\Users\Mrs. Azzahra\Documents\semester 6\Data Analytics\Tubes\Tugas-Besar-Data-Analytics\raw_data
+[2026-05-26 22:54:57]   Docs     : C:\Users\Mrs. Azzahra\Documents\semester 6\Data Analytics\Tubes\Tugas-Besar-Data-Analytics\docs
+[2026-05-26 22:54:57] 
+── Langkah 1: Menyalin dataset mentah ke /raw_data/ ──
+[2026-05-26 22:54:57]   ✓  Disalin: Utama_Jumlah_Proyeksi_UMKM_Jabar.csv
+[2026-05-26 22:54:57]   ✓  Disalin: Utama_Jumlah_UMKM_Binaan_Jabar.csv
+[2026-05-26 22:54:57]   ✓  Disalin: Pendukung_Jumlah_Penduduk.csv
+[2026-05-26 22:54:57]   ✓  Disalin: Pendukung_Pengeluaran.csv
+[2026-05-26 22:54:57] 
+── Langkah 2: Validasi Integritas Dataset ──
+[2026-05-26 22:54:57] 
+  Memvalidasi: Utama_Jumlah_Proyeksi_UMKM_Jabar.csv
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_Proyeksi_UMKM_Jabar.csv: 216 baris (sesuai)
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_Proyeksi_UMKM_Jabar.csv: 27 kabupaten/kota hadir
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_Proyeksi_UMKM_Jabar.csv: tahun 2016–2023
+[2026-05-26 22:54:57] 
+  Memvalidasi: Utama_Jumlah_UMKM_Binaan_Jabar.csv
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_UMKM_Binaan_Jabar.csv: 2025 baris (sesuai)
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_UMKM_Binaan_Jabar.csv: 27 kabupaten/kota hadir
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_UMKM_Binaan_Jabar.csv: tahun 2019–2023
+[2026-05-26 22:54:57] 
+  Memvalidasi: Pendukung_Jumlah_Penduduk.csv
+[2026-05-26 22:54:57]   ✓  Pendukung_Jumlah_Penduduk.csv: 432 baris (sesuai)
+[2026-05-26 22:54:57]   ✓  Pendukung_Jumlah_Penduduk.csv: 27 kabupaten/kota hadir
+[2026-05-26 22:54:57]   ✓  Pendukung_Jumlah_Penduduk.csv: tahun 2010–2025
+[2026-05-26 22:54:57] 
+  Memvalidasi: Pendukung_Pengeluaran.csv
+[2026-05-26 22:54:57]   ✓  Pendukung_Pengeluaran.csv: 402 baris (sesuai)
+[2026-05-26 22:54:57]   ✓  Pendukung_Pengeluaran.csv: 27 kabupaten/kota hadir
+[2026-05-26 22:54:57]   ✓  Pendukung_Pengeluaran.csv: tahun 2010–2024
+[2026-05-26 22:54:57] 
+── Pemeriksaan Konsistensi Nama Kabupaten/Kota ──
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_Proyeksi_UMKM_Jabar.csv: nama kabupaten/kota konsisten
+[2026-05-26 22:54:57]   ✓  Utama_Jumlah_UMKM_Binaan_Jabar.csv: nama kabupaten/kota konsisten
+[2026-05-26 22:54:57]   ✓  Pendukung_Jumlah_Penduduk.csv: nama kabupaten/kota konsisten
+[2026-05-26 22:54:57]   ✓  Pendukung_Pengeluaran.csv: nama kabupaten/kota konsisten
+[2026-05-26 22:54:57]   ✓  Semua dataset konsisten — join siap dilakukan
+[2026-05-26 22:54:57] 
+── Langkah 4: Menyimpan Inventaris Dataset ──
+[2026-05-26 22:54:57] 
+  ✓  Inventaris disimpan → C:\Users\Mrs. Azzahra\Documents\semester 6\Data Analytics\Tubes\Tugas-Besar-Data-Analytics\docs\dataset_inventory.csv
+[2026-05-26 22:54:57]   ✓  Inventaris JSON disimpan → C:\Users\Mrs. Azzahra\Documents\semester 6\Data Analytics\Tubes\Tugas-Besar-Data-Analytics\docs\dataset_inventory.json
+[2026-05-26 22:54:57] 
+============================================================
+[2026-05-26 22:54:57]   RINGKASAN PIPELINE
+[2026-05-26 22:54:57] ============================================================
+[2026-05-26 22:54:57]   Dataset diproses : 4
+[2026-05-26 22:54:57]   Status OK        : 4
+[2026-05-26 22:54:57]   Status WARNING   : 0
+[2026-05-26 22:54:57]   File output      :
+[2026-05-26 22:54:57]     raw_data/Utama_Jumlah_Proyeksi_UMKM_Jabar.csv
+[2026-05-26 22:54:57]     raw_data/Utama_Jumlah_UMKM_Binaan_Jabar.csv
+[2026-05-26 22:54:57]     raw_data/Pendukung_Jumlah_Penduduk.csv
+[2026-05-26 22:54:57]     raw_data/Pendukung_Pengeluaran.csv
+[2026-05-26 22:54:57]     docs/dataset_inventory.csv
+[2026-05-26 22:54:57]     docs/dataset_inventory.json
+[2026-05-26 22:54:57]     docs/obtain_log.txt
+[2026-05-26 22:54:57] 
+  Pipeline Tahap O selesai. Lanjut ke 02_scrub.py.
+[2026-05-26 22:54:57] ============================================================
