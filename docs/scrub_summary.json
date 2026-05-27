@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-05-27T22:15:09",
+  "input_files": {
+    "proyeksi_umkm": "Utama_Jumlah_Proyeksi_UMKM_Jabar.csv",
+    "umkm_binaan": "Utama_Jumlah_UMKM_Binaan_Jabar.csv",
+    "penduduk": "Pendukung_Jumlah_Penduduk.csv",
+    "pengeluaran": "Pendukung_Pengeluaran.csv"
+  },
+  "output_files": {
+    "clean_dataset": "/Users/darryl/Documents/GitHub/Tugas-Besar-Data-Analytics/clean_data/clean_dataset.csv",
+    "umkm_binaan_pivot": "/Users/darryl/Documents/GitHub/Tugas-Besar-Data-Analytics/clean_data/umkm_binaan_pivot.csv",
+    "scrub_documentation": "/Users/darryl/Documents/GitHub/Tugas-Besar-Data-Analytics/docs/scrub_documentation.csv"
+  },
+  "periode_analisis": "2019-2023",
+  "rows": 135,
+  "columns": 17,
+  "kabupaten_kota": 27,
+  "missing_values": 0,
+  "duplicate_keys": 0,
+  "feature_columns": [
+    "kepadatan_per_1000",
+    "pertumbuhan_pct",
+    "daya_beli",
+    "sektor_dominan",
+    "total_umkm_binaan",
+    "share_sektor_dominan_pct"
+  ]
+}

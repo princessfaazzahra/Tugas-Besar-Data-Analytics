@@ -12,7 +12,8 @@ Tugas-Besar-Data-Analytics/
 │   └── Pendukung_Pengeluaran.csv
 │
 ├── clean_data/                       ← [Preprocessing] Output 02_scrub.py
-│   └── (diisi oleh Data Preprocessing Lead)
+│   ├── clean_dataset.csv
+│   └── umkm_binaan_pivot.csv
 │
 ├── output/
 │   ├── visualizations/               ← [Viz] PNG/HTML dari 05_visualize.py
@@ -21,7 +22,9 @@ Tugas-Besar-Data-Analytics/
 ├── docs/
 │   ├── dataset_inventory.csv         ← [DE] Tabel dokumentasi 4 dataset
 │   ├── dataset_inventory.json        ← [DE] Inventaris format JSON
-│   └── obtain_log.txt                ← [DE] Log lengkap pipeline
+│   ├── obtain_log.txt                ← [DE] Log lengkap pipeline
+│   ├── scrub_documentation.csv       ← [Preprocessing] Keputusan cleaning Bab 3
+│   └── scrub_summary.json            ← [Preprocessing] Ringkasan validasi output
 │
 ├── 01_obtain.py                      ← [DE] Pipeline pengambilan & validasi data
 ├── 02_scrub.py                       ← [Preprocessing] Cleaning & integrasi
@@ -102,6 +105,17 @@ python 05_visualize.py
 ```
 
 ---
+
+## Output Preprocessing
+
+Script `02_scrub.py` menghasilkan:
+
+| File | Isi |
+|------|-----|
+| `clean_data/clean_dataset.csv` | Dataset bersih hasil join 4 dataset, level kab/kota-tahun, periode 2019-2023 |
+| `clean_data/umkm_binaan_pivot.csv` | Pivot jumlah UMKM binaan per jenis usaha, siap dipakai untuk eksplorasi sektor |
+| `docs/scrub_documentation.csv` | Dokumentasi cleaning: kondisi awal, tindakan, kondisi akhir, alasan |
+| `docs/scrub_summary.json` | Ringkasan validasi output preprocessing |
 
 ## Fitur yang Dihasilkan
 
