@@ -13,3 +13,38 @@ Output: output/visualizations/*.png
 """
 raise NotImplementedError("03_explore.py belum diimplementasikan. "
                           "Silakan diisi oleh Data Analyst/Modeler.")
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Gathering Data
+clean_dataset = pd.read_csv("clean_data/clean_dataset.csv")
+umkm_binaan_pivot = pd.read_csv("clean_data/umkm_binaan_pivot.csv")
+\
+# Analisis 2: Distribusi UMKM per Kab/Kota
+def umkm_distribution(tahun, n_top=5):
+  tahun_list = [2019, 2020, 2021, 2022, 2023
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
