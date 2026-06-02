@@ -124,15 +124,20 @@ def visualization_purchasing_power (daya_beli_data):
 
 # 4. Membuat data dan visualisasi untuk eksplorasi "Analisis Sektor Unggulan tiap Tahun"
 def leading_sector_analysis(t):
-    semua_sektor_tiap_tahun = [umkm_binaan_pivot[umkm_binaan_pivot["tahun"] == t[i]] for i in range(5)]
-
+    # TAMBAHKAN .copy() di akhir baris ini agar data benar-benar terpisah
+    semua_sektor_tiap_tahun = [umkm_binaan_pivot[umkm_binaan_pivot["tahun"] == t[i]].copy() for i in range(5)]
+    
     for i in range(len(semua_sektor_tiap_tahun)):
         total_per_kolom = semua_sektor_tiap_tahun[i].sum(numeric_only=True)
         semua_sektor_tiap_tahun[i].loc['TOTAL'] = total_per_kolom
         semua_sektor_tiap_tahun[i].loc['TOTAL', "nama_kabupaten_kota"] = "TOTAL KESELURUHAN"
-        semua_sektor_tiap_tahun[i].loc['TOTAL', "tahun"] = "-"
-    baris_total_sektor = [semua_sektor_tiap_tahun[j].iloc[-1:, 2:17] for j in range(5)]
-    list_value = [baris_total_sektor[k].loc["TOTAL", baris_total_sektor[k].dtypes != "object"].tolist() for k in range(5)]
+        
+        # GANTI "-" menjadi 0 atau hapus baris ini jika tidak terlalu penting, 
+        # agar tidak mencampur tipe data integer dan string
+        semua_sektor_tiap_tahun[i].loc['TOTAL', "tahun"] = 0 
+        
+    baris_total_sector = [semua_sektor_tiap_tahun[j].iloc[-1:, 2:17] for j in range(5)]
+    list_value = [baris_total_sector[k].loc["TOTAL", baris_total_sector[k].dtypes != "object"].tolist() for k in range(5)]
     return list_value
 
 def visualization_sector_analysis(t):
@@ -154,18 +159,10 @@ def visualization_sector_analysis(t):
     plt.close()
 
 # Fungsi utama untuk mengatur alur
-def main():
-    print("--- Memulai Program ---")
-    visualization_umkm_distribution(5)
-    pertumbuhan_abs()
-    visualization_purchasing_power([distribusi_daya_beli(2019+i) for i in range(5)])
-    visualization_sector_analysis([2019, 2020, 2021, 2022, 2023])
-    print("--- Program Selesai ---")
-
-# Blok pengeksekusi
-if __name__ == '__main__':
-    main()
-
+visualization_umkm_distribution(5)
+pertumbuhan_abs()
+visualization_purchasing_power([distribusi_daya_beli(2019+i) for i in range(5)])
+visualization_sector_analysis([2019, 2020, 2021, 2022, 2023])
 
 
 
