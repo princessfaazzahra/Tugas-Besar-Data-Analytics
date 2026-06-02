@@ -11,8 +11,6 @@ Tasks:
 Input : clean_data/clean_dataset.csv
 Output: output/visualizations/*.png
 """
-raise NotImplementedError("03_explore.py belum diimplementasikan. "
-                          "Silakan diisi oleh Data Analyst/Modeler.")
 
 import os
 import shutil
@@ -20,6 +18,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Membuat folder output/visualization
+folder_output = "output/visualization"
+os.makedirs(folder_output)
 
 # Gathering Data
 clean_dataset = pd.read_csv("clean_data/clean_dataset.csv")
