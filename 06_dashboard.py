@@ -99,7 +99,7 @@ COORDS_JABAR = {
 
 st.set_page_config(
     page_title="Dashboard UMKM Jawa Barat",
-    page_icon="📊",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -165,14 +165,17 @@ button:not([class*="material"]),
 }
 .kpi-sub { font-size: 12px; color: #9CA3AF; font-weight: 400; }
 
-/* Chart card */
-.chart-card {
+/* Plotly chart containers — rounded + shadow + no bg bleed */
+[data-testid="stPlotlyChart"],
+[data-testid="stPlotlyChart"] > div {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}
+[data-testid="stPlotlyChart"] {
     background: #FFFFFF;
-    border-radius: 16px;
     border: 1px solid #E8EAED;
-    box-shadow: 0 1px 3px rgba(16,24,40,0.06);
-    padding: 22px 24px 16px;
-    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(16,24,40,0.07);
+    margin-bottom: 4px;
 }
 
 /* Section header */
@@ -258,13 +261,13 @@ def plotly_base(fig, height=380, show_legend=True, margin=None):
     m = margin or dict(l=12, r=12, t=36, b=12)
     fig.update_layout(
         font=dict(family="Plus Jakarta Sans, sans-serif", color="#374151", size=12),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        plot_bgcolor="rgba(0,0,0,0)",   # transparent — chart float di atas white container
+        paper_bgcolor="rgba(0,0,0,0)",
         height=height,
         margin=m,
         legend=dict(
             orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-            font_size=11.5, bgcolor="rgba(0,0,0,0)", borderwidth=0,
+            font_size=11.5, bgcolor="rgba(255,255,255,0.7)", borderwidth=0,
             itemsizing="constant",
         ) if show_legend else dict(visible=False),
         hoverlabel=dict(
@@ -272,8 +275,24 @@ def plotly_base(fig, height=380, show_legend=True, margin=None):
             bgcolor="white", bordercolor="#E8EAED",
         ),
     )
-    fig.update_xaxes(showgrid=False, linecolor="#E8EAED", tickfont_size=11.5, tickcolor="#E8EAED")
-    fig.update_yaxes(gridcolor="#F2F4F7", linecolor="#E8EAED", tickfont_size=11.5, tickcolor="#E8EAED")
+    # Minimalist axes — no border line, faint horizontal grid only
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        linecolor="rgba(0,0,0,0)",
+        tickfont_size=11,
+        tickcolor="#C9CDD4",
+        tickfont_color="#9CA3AF",
+    )
+    fig.update_yaxes(
+        gridcolor="#F0F2F5",
+        gridwidth=1,
+        zeroline=False,
+        linecolor="rgba(0,0,0,0)",
+        tickfont_size=11,
+        tickcolor="#C9CDD4",
+        tickfont_color="#9CA3AF",
+    )
     return fig
 
 
@@ -287,13 +306,38 @@ def kpi_card(col, bg, label, value, sub):
     """, unsafe_allow_html=True)
 
 
-def section(title, sub=""):
-    st.markdown(f"""
-    <div class="sec-head">
-        <p class="sec-title">{title}</p>
-        {"" if not sub else f'<p class="sec-sub">{sub}</p>'}
-    </div>
-    """, unsafe_allow_html=True)
+def section(title):
+    st.markdown(f'<p class="sec-title" style="margin:0 0 10px;">{title}</p>',
+                unsafe_allow_html=True)
+
+
+def chips(*items):
+    """
+    Render info chip badges di bawah section title.
+    Setiap item bisa str (chip abu-abu default) atau
+    tuple (label, bg, color, border).
+    """
+    _D = ("#F3F4F6", "#374151", "#E5E7EB")
+    parts = []
+    for it in items:
+        if isinstance(it, str):
+            txt, bg, clr, bdr = it, *_D
+        else:
+            txt = it[0]
+            bg  = it[1] if len(it) > 1 else _D[0]
+            clr = it[2] if len(it) > 2 else _D[1]
+            bdr = it[3] if len(it) > 3 else _D[2]
+        parts.append(
+            f'<span style="display:inline-flex;align-items:center;gap:5px;'
+            f'background:{bg};color:{clr};font-size:11.5px;font-weight:500;'
+            f'padding:5px 12px;border-radius:20px;border:1px solid {bdr};'
+            f'font-family:\'Plus Jakarta Sans\',sans-serif;">{txt}</span>'
+        )
+    st.markdown(
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;">'
+        + "".join(parts) + "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 # ─────────────────────────────────────────────────────────────
@@ -417,8 +461,13 @@ st.markdown("<br>", unsafe_allow_html=True)
 # TREN UMKM
 # ─────────────────────────────────────────────────────────────
 
-section("Tren Jumlah UMKM per Tahun",
-        "Perkembangan UMKM per kabupaten/kota — hover untuk detail")
+section("Tren Jumlah UMKM per Tahun")
+chips(
+    "Periode 2019–2023",
+    ("Top 8 kab/kota by total UMKM (default)", "#FFF0F4", "#FF5C8D", "#FFD6E3"),
+    "Klik nama di legend untuk isolate satu wilayah",
+    ("Hover untuk detail per tahun", "#F0F4F8", "#6B7280", "#DDE3EA"),
+)
 
 kab_tren = kab_filter if kab_filter else (
     clean_df.groupby("nama_kabupaten_kota")["jumlah_umkm"]
@@ -471,65 +520,75 @@ st.markdown("<br>", unsafe_allow_html=True)
 # SCATTER KLASTER + PROFIL KLASTER
 # ─────────────────────────────────────────────────────────────
 
-section("Sebaran & Profil Klaster UMKM",
-        "Kepadatan vs Daya Beli per kab/kota · ukuran bubble ∝ pertumbuhan · hover untuk detail lengkap")
+section("Sebaran & Profil Klaster UMKM")
+chips(
+    "X · Kepadatan UMKM / 1.000 Penduduk",
+    "Y · Daya Beli per Kapita (ribu Rp)",
+    ("⬤ Ukuran bubble = Pertumbuhan UMKM (%)", "#FFF0F4", "#FF5C8D", "#FFD6E3"),
+    ("◆ Warna = Klaster K-Means", "#F5F0F3", "#732553", "#E8D5E0"),
+    ("↗ Hover untuk detail tiap wilayah", "#F0F4F8", "#6B7280", "#DDE3EA"),
+)
 
-col_l, col_r = st.columns([3, 2], gap="large")
+# ── Scatter full-width ───────────────────────────────────────
+df_sc = df_2023.dropna(subset=["cluster"]).copy()
+df_sc["klaster_str"] = df_sc["cluster"].map(
+    lambda x: f"Klaster {int(x)} — {CLUSTER_LABELS.get(int(x), '')}"
+)
+df_sc["bubble"] = np.clip(np.abs(df_sc["pertumbuhan_pct"].fillna(0)) * 5 + 10, 10, 45)
+color_map = {f"Klaster {k} — {CLUSTER_LABELS.get(k, '')}": v for k, v in CLUSTER_COLORS.items()}
 
-with col_l:
+fig_sc = px.scatter(
+    df_sc,
+    x="kepadatan_per_1000", y="daya_beli",
+    color="klaster_str", size="bubble", size_max=50,
+    hover_name="nama_short",
+    color_discrete_map=color_map,
+    custom_data=["nama_short", "klaster_str", "kepadatan_per_1000",
+                 "daya_beli", "pertumbuhan_pct", "sektor_dominan"],
+    labels={
+        "kepadatan_per_1000": "Kepadatan UMKM / 1.000 Penduduk",
+        "daya_beli": "Daya Beli (ribu Rp/kapita)",
+        "klaster_str": "Klaster",
+    },
+)
+fig_sc.update_traces(
+    marker_opacity=0.82,
+    marker_line_width=1.5,
+    marker_line_color="white",
+    hovertemplate=(
+        "<b>%{customdata[0]}</b><br>"
+        "<span style='color:#6B7280'>%{customdata[1]}</span><br><br>"
+        "Kepadatan: <b>%{customdata[2]:.1f}</b> per 1.000<br>"
+        "Daya Beli: <b>Rp %{customdata[3]:,.0f}</b><br>"
+        "Pertumbuhan: <b>%{customdata[4]:.1f}%</b><br>"
+        "Sektor: %{customdata[5]}"
+        "<extra></extra>"
+    ),
+)
+plotly_base(fig_sc, height=460, margin=dict(l=12, r=12, t=36, b=12))
+fig_sc.update_layout(legend=dict(
+    orientation="v", yanchor="top", y=1, xanchor="left", x=0,
+    font_size=12, bgcolor="rgba(255,255,255,0.88)",
+    borderwidth=1, bordercolor="#E8EAED",
+))
+fig_sc.update_yaxes(tickformat=",")
+st.plotly_chart(fig_sc, use_container_width=True)
 
-    df_sc = df_2023.dropna(subset=["cluster"]).copy()
-    df_sc["klaster_str"] = df_sc["cluster"].map(
-        lambda x: f"Klaster {int(x)} — {CLUSTER_LABELS.get(int(x), '')}"
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ── Profil + Rekomendasi — 2 kolom di bawah scatter ─────────
+col_prof, col_rek = st.columns(2, gap="large")
+
+with col_prof:
+    section("Profil Rata-Rata per Klaster")
+    chips(
+        "Rata-rata 3 indikator utama per klaster",
+        ("Grouped bar — klik legend untuk filter", "#F0F4F8", "#6B7280", "#DDE3EA"),
     )
-    df_sc["bubble"] = np.clip(np.abs(df_sc["pertumbuhan_pct"].fillna(0)) * 5 + 10, 10, 45)
-
-    color_map = {f"Klaster {k} — {CLUSTER_LABELS.get(k, '')}": v for k, v in CLUSTER_COLORS.items()}
-
-    fig_sc = px.scatter(
-        df_sc,
-        x="kepadatan_per_1000", y="daya_beli",
-        color="klaster_str", size="bubble", size_max=45,
-        hover_name="nama_short",
-        color_discrete_map=color_map,
-        custom_data=["nama_short", "klaster_str", "kepadatan_per_1000",
-                     "daya_beli", "pertumbuhan_pct", "sektor_dominan"],
-        labels={
-            "kepadatan_per_1000": "Kepadatan UMKM / 1.000 Penduduk",
-            "daya_beli": "Daya Beli (ribu Rp/kapita)",
-            "klaster_str": "Klaster",
-        },
-    )
-    fig_sc.update_traces(
-        marker_opacity=0.82,
-        marker_line_width=1.5,
-        marker_line_color="white",
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "<span style='color:#6B7280'>%{customdata[1]}</span><br><br>"
-            "Kepadatan: <b>%{customdata[2]:.1f}</b> per 1.000<br>"
-            "Daya Beli: <b>Rp %{customdata[3]:,.0f}</b><br>"
-            "Pertumbuhan: <b>%{customdata[4]:.1f}%</b><br>"
-            "Sektor: %{customdata[5]}"
-            "<extra></extra>"
-        ),
-    )
-    plotly_base(fig_sc, height=420,
-                margin=dict(l=12, r=12, t=36, b=12))
-    fig_sc.update_layout(legend=dict(
-        orientation="v", yanchor="top", y=1, xanchor="left", x=0,
-        font_size=11.5, bgcolor="rgba(255,255,255,0.8)",
-        borderwidth=1, bordercolor="#E8EAED",
-    ))
-    fig_sc.update_yaxes(tickformat=",")
-    st.plotly_chart(fig_sc, use_container_width=True)
-
-with col_r:
-    st.markdown('<p class="sec-title" style="margin-bottom:16px;">Profil &amp; Rekomendasi per Klaster</p>', unsafe_allow_html=True)
 
     prof = cluster_pro.reset_index()
-    prof.columns = ["cluster", "Kepadatan\n/1.000", "Pertumbuhan (%)", "Daya Beli"]
-    prof_f = prof[prof["cluster"].isin(cluster_filter)]
+    prof.columns = ["cluster", "Kepadatan / 1.000", "Pertumbuhan (%)", "Daya Beli"]
+    prof_f   = prof[prof["cluster"].isin(cluster_filter)]
     prof_long = prof_f.melt("cluster", var_name="Indikator", value_name="Nilai")
     prof_long["Klaster"] = prof_long["cluster"].map(lambda x: f"Klaster {int(x)}")
 
@@ -547,20 +606,44 @@ with col_r:
             "<extra></extra>"
         ),
     )
-    plotly_base(fig_prof, height=220)
+    plotly_base(fig_prof, height=280)
     fig_prof.update_xaxes(showgrid=True, gridcolor="#F2F4F7", showticklabels=False)
     fig_prof.update_yaxes(autorange="reversed", showgrid=False)
     st.plotly_chart(fig_prof, use_container_width=True)
 
-    st.markdown("**Rekomendasi Pembiayaan**")
+with col_rek:
+    section("Rekomendasi Pembiayaan")
+    chips(
+        "Strategi per klaster hasil segmentasi K-Means",
+        ("Sesuaikan dengan wilayah target sasaran", "#F0F4F8", "#6B7280", "#DDE3EA"),
+    )
+
     for cid in sorted(cluster_filter):
-        c = CLUSTER_COLORS.get(cid, "#999")
+        c     = CLUSTER_COLORS.get(cid, "#999")
+        label = CLUSTER_LABELS.get(cid, "")
+        rek   = REKOMENDASI.get(cid, "–")
         st.markdown(f"""
-        <div class="rek-card" style="background:{c}10;border-color:{c};">
-            <div class="rek-klaster" style="color:{c};">
-                Klaster {cid} — {CLUSTER_LABELS.get(cid, '')}
+        <div style="background:white;border-radius:14px;border:1px solid #E8EAED;
+                    border-left:4px solid {c};padding:18px 20px;margin-bottom:12px;
+                    box-shadow:0 1px 3px rgba(16,24,40,0.05);
+                    font-family:'Plus Jakarta Sans',sans-serif;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:9px;height:9px;border-radius:50%;background:{c};
+                             display:inline-block;flex-shrink:0;"></span>
+                <div>
+                    <div style="font-size:10.5px;font-weight:700;color:#9CA3AF;
+                                letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px;">
+                        Klaster {cid}
+                    </div>
+                    <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.2;">
+                        {label}
+                    </div>
+                </div>
             </div>
-            <div class="rek-text">{REKOMENDASI.get(cid, '–')}</div>
+            <div style="font-size:13px;color:#374151;line-height:1.7;
+                        border-top:1px solid #F3F4F6;padding-top:10px;">
+                {rek}
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -571,13 +654,18 @@ st.markdown("<br>", unsafe_allow_html=True)
 # SEKTOR BREAKDOWN
 # ─────────────────────────────────────────────────────────────
 
-section("Komposisi UMKM Binaan per Sektor",
-        "Pilih kabupaten/kota untuk melihat tren sektor dari tahun ke tahun")
+section("Komposisi UMKM Binaan per Sektor")
+chips(
+    "15 sektor bisnis UMKM binaan",
+    ("Pilih kab/kota + sektor pada filter di bawah", "#FFF0F4", "#FF5C8D", "#FFD6E3"),
+    "Stacked bar tren tahunan + donut komposisi total",
+    ("Hover untuk detail per sektor", "#F0F4F8", "#6B7280", "#DDE3EA"),
+)
 
-col_sel, _ = st.columns([2, 3])
+col_sel, col_sek_filter = st.columns([2, 3], gap="medium")
 with col_sel:
     kab_sektor = st.selectbox(
-        "Pilih Wilayah",
+        "Wilayah",
         options=all_kab,
         format_func=lambda x: str(x).title(),
         key="kab_sektor",
@@ -591,62 +679,73 @@ df_sek = binaan_df[
 
 avail_sek = [s for s in sektor_cols if s in df_sek.columns]
 
+with col_sek_filter:
+    sektor_filter = st.multiselect(
+        "Filter Sektor",
+        options=avail_sek,
+        default=avail_sek,
+        placeholder="Semua sektor",
+        key="sektor_filter",
+        label_visibility="collapsed",
+    )
+    if not sektor_filter:
+        sektor_filter = avail_sek
+
 if len(df_sek) > 0 and avail_sek:
     sek_long = df_sek[["tahun"] + avail_sek].melt(
         "tahun", var_name="Sektor", value_name="Jumlah UMKM Binaan"
     )
-    # Top 10 sektor by total
-    top10 = (sek_long.groupby("Sektor")["Jumlah UMKM Binaan"]
-             .sum().nlargest(10).index.tolist())
-    sek_top = sek_long[sek_long["Sektor"].isin(top10)]
+    sek_filtered = sek_long[sek_long["Sektor"].isin(sektor_filter)]
 
-    col_sbar, col_spie = st.columns([2, 1], gap="large")
+    col_sbar, col_spie = st.columns([3, 2], gap="large")
 
     with col_sbar:
+        st.markdown(
+            f'<p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 8px;'
+            f'font-family:\'Plus Jakarta Sans\',sans-serif;">Tren per Tahun'
+            f' — {str(kab_sektor).title()}</p>',
+            unsafe_allow_html=True,
+        )
         fig_sek = px.bar(
-            sek_top, x="tahun", y="Jumlah UMKM Binaan", color="Sektor",
+            sek_filtered, x="tahun", y="Jumlah UMKM Binaan", color="Sektor",
             barmode="stack",
             custom_data=["Sektor", "Jumlah UMKM Binaan"],
             color_discrete_sequence=SEKTOR_COLORS,
             labels={"tahun": "Tahun", "Jumlah UMKM Binaan": "Jumlah UMKM Binaan"},
-            title=f"Tren Sektor · {str(kab_sektor).title()}",
         )
         fig_sek.update_traces(
             marker_line_width=0,
             hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]:,} UMKM<extra></extra>",
         )
-        plotly_base(fig_sek, height=340, show_legend=False)
+        plotly_base(fig_sek, height=320, show_legend=False)
         fig_sek.update_xaxes(tickmode="linear", dtick=1)
         fig_sek.update_yaxes(tickformat=",")
-        fig_sek.update_layout(legend=dict(
-            orientation="v", yanchor="top", y=1, xanchor="left", x=1.01,
-            font_size=11,
-        ))
         st.plotly_chart(fig_sek, use_container_width=True)
 
     with col_spie:
-        # Pie: total per sektor (semua tahun filter)
-        sek_total = (sek_long.groupby("Sektor")["Jumlah UMKM Binaan"]
+        st.markdown(
+            '<p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 8px;'
+            'font-family:\'Plus Jakarta Sans\',sans-serif;">Komposisi Total</p>',
+            unsafe_allow_html=True,
+        )
+        sek_total = (sek_filtered.groupby("Sektor")["Jumlah UMKM Binaan"]
                      .sum().reset_index().sort_values("Jumlah UMKM Binaan", ascending=False))
         fig_pie = px.pie(
             sek_total, values="Jumlah UMKM Binaan", names="Sektor",
             color_discrete_sequence=SEKTOR_COLORS,
-            title=f"Komposisi Total",
-            hole=0.4,
+            hole=0.42,
         )
         fig_pie.update_traces(
             textposition="inside",
             textinfo="percent",
             hovertemplate="<b>%{label}</b><br>%{value:,} UMKM<br>%{percent}<extra></extra>",
         )
-        plotly_base(fig_pie, height=340, show_legend=False)
-        fig_pie.update_layout(
-            legend=dict(
-                orientation="v", yanchor="middle", y=0.5,
-                xanchor="left", x=1.01, font_size=10,
-            ),
-            margin=dict(l=0, r=0, t=40, b=0),
-        )
+        plotly_base(fig_pie, height=280, show_legend=False,
+                    margin=dict(l=0, r=0, t=8, b=0))
+        fig_pie.update_layout(legend=dict(
+            orientation="v", yanchor="middle", y=0.5,
+            xanchor="left", x=1.01, font_size=10,
+        ))
         st.plotly_chart(fig_pie, use_container_width=True)
 else:
     st.info("Data sektor tidak tersedia untuk filter ini.")
@@ -658,8 +757,14 @@ st.markdown("<br>", unsafe_allow_html=True)
 # PETA SEBARAN
 # ─────────────────────────────────────────────────────────────
 
-section("Peta Sebaran Klaster Jawa Barat",
-        "Ukuran bubble ∝ jumlah UMKM · warna = klaster · hover untuk detail")
+section("Peta Sebaran Klaster Jawa Barat")
+chips(
+    "27 kab/kota Jawa Barat",
+    ("Ukuran bubble = Jumlah UMKM", "#FFF0F4", "#FF5C8D", "#FFD6E3"),
+    ("Warna = Klaster K-Means", "#F5F0F3", "#732553", "#E8D5E0"),
+    "Scroll untuk zoom · drag untuk geser",
+    ("Hover untuk detail tiap wilayah", "#F0F4F8", "#6B7280", "#DDE3EA"),
+)
 
 df_map = df_2023.dropna(subset=["cluster"]).copy()
 df_map["lat"] = df_map["nama_kabupaten_kota"].map(
