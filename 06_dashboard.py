@@ -6,16 +6,13 @@ Jalankan:
     streamlit run 06_dashboard.py
 """
 
-import os
 import warnings
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import folium
 import streamlit as st
-import streamlit.components.v1 as components
 
 warnings.filterwarnings("ignore")
 
@@ -65,6 +62,37 @@ SEKTOR_COLORS = [
     "#FF8FAB", "#5C1F3D", "#637B84", "#D4C5B8", "#1E3442",
 ]
 
+# Koordinat sentroid tiap kab/kota Jawa Barat (lat, lon)
+COORDS_JABAR = {
+    "KABUPATEN BANDUNG":       (-7.04,  107.56),
+    "KABUPATEN BANDUNG BARAT": (-6.84,  107.52),
+    "KABUPATEN BEKASI":        (-6.28,  107.23),
+    "KABUPATEN BOGOR":         (-6.65,  106.83),
+    "KABUPATEN CIAMIS":        (-7.33,  108.36),
+    "KABUPATEN CIANJUR":       (-6.82,  107.14),
+    "KABUPATEN CIREBON":       (-6.73,  108.55),
+    "KABUPATEN GARUT":         (-7.22,  107.90),
+    "KABUPATEN INDRAMAYU":     (-6.33,  108.32),
+    "KABUPATEN KARAWANG":      (-6.32,  107.30),
+    "KABUPATEN KUNINGAN":      (-6.98,  108.48),
+    "KABUPATEN MAJALENGKA":    (-6.84,  108.23),
+    "KABUPATEN PANGANDARAN":   (-7.68,  108.53),
+    "KABUPATEN PURWAKARTA":    (-6.56,  107.44),
+    "KABUPATEN SUBANG":        (-6.57,  107.76),
+    "KABUPATEN SUKABUMI":      (-6.84,  106.93),
+    "KABUPATEN SUMEDANG":      (-6.85,  107.92),
+    "KABUPATEN TASIKMALAYA":   (-7.34,  108.07),
+    "KOTA BANDUNG":            (-6.92,  107.61),
+    "KOTA BANJAR":             (-7.37,  108.54),
+    "KOTA BEKASI":             (-6.24,  106.99),
+    "KOTA BOGOR":              (-6.60,  106.79),
+    "KOTA CIMAHI":             (-6.87,  107.54),
+    "KOTA CIREBON":            (-6.71,  108.56),
+    "KOTA DEPOK":              (-6.40,  106.82),
+    "KOTA SUKABUMI":           (-6.92,  106.93),
+    "KOTA TASIKMALAYA":        (-7.35,  108.22),
+}
+
 # ─────────────────────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────────────────────
@@ -95,11 +123,16 @@ h1, h2, h3, h4, h5, h6,
 
 .stApp { background-color: #F7F8FA; }
 
+/* Sidebar — fixed width, no drag-to-resize */
 [data-testid="stSidebar"] {
     background-color: #FFFFFF;
     border-right: 1px solid #E8EAED;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    width: 280px !important;
 }
 [data-testid="stSidebar"] .block-container { padding-top: 1.5rem; }
+[data-testid="stSidebarResizeHandle"] { display: none !important; }
 
 .block-container {
     padding-top: 1.75rem !important;
@@ -115,21 +148,14 @@ h1, h2, h3, h4, h5, h6,
     box-shadow: 0 1px 3px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04);
     padding: 20px 22px 18px;
 }
-.kpi-icon {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 19px;
-    margin-bottom: 14px;
-}
 .kpi-label {
     font-size: 11.5px; font-weight: 600;
     color: #6B7280; letter-spacing: 0.06em;
-    text-transform: uppercase; margin-bottom: 6px;
+    text-transform: uppercase; margin-bottom: 8px;
 }
 .kpi-value {
     font-size: 28px; font-weight: 800;
-    color: #111827; line-height: 1; margin-bottom: 6px;
+    color: #111827; line-height: 1; margin-bottom: 8px;
 }
 .kpi-sub { font-size: 12px; color: #9CA3AF; font-weight: 400; }
 
@@ -216,68 +242,6 @@ def load_data():
     return clean_df, clean_2023, cluster_pro, binaan_df, sektor_cols
 
 
-@st.cache_data
-def build_map_html(clean_2023_json: str) -> str | None:
-    import requests as req
-
-    clean_2023 = pd.read_json(clean_2023_json, orient="records")
-    sources = [
-        "https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/jawa-barat.geojson",
-        "https://raw.githubusercontent.com/ans-4175/peta-indonesia-geojson/master/jawa-barat.geojson",
-    ]
-    geojson = None
-    for url in sources:
-        try:
-            r = req.get(url, timeout=15)
-            if r.status_code == 200:
-                geojson = r.json()
-                break
-        except Exception:
-            continue
-    if geojson is None:
-        return None
-
-    df_map = clean_2023[["nama_kabupaten_kota", "cluster"]].dropna().copy()
-    df_map["cluster"] = df_map["cluster"].astype(int)
-
-    m = folium.Map(location=[-7.0, 107.5], zoom_start=8, tiles="CartoDB positron")
-
-    def style_fn(feature):
-        geo = (feature.get("properties", {}).get("name", "") or
-               feature.get("properties", {}).get("NAME_2", "") or
-               feature.get("properties", {}).get("kabkot", ""))
-        geo = str(geo).upper().strip()
-        cid = None
-        for _, row in df_map.iterrows():
-            kab = str(row["nama_kabupaten_kota"]).upper()
-            if geo in kab or kab in geo or any(p in geo for p in kab.split() if len(p) > 4):
-                cid = int(row["cluster"])
-                break
-        return {"fillColor": CLUSTER_COLORS.get(cid, "#D3D3D3"),
-                "color": "#FFFFFF", "weight": 1.5, "fillOpacity": 0.75}
-
-    folium.GeoJson(
-        geojson, name="Klaster UMKM", style_function=style_fn,
-        tooltip=folium.GeoJsonTooltip(
-            fields=list(geojson["features"][0]["properties"].keys())[:2],
-            aliases=["Wilayah:"] * 2, sticky=True,
-        ),
-    ).add_to(m)
-
-    legend_html = """
-    <div style="position:fixed;bottom:30px;left:30px;z-index:1000;background:white;
-                padding:16px 20px;border-radius:14px;
-                box-shadow:0 4px 16px rgba(0,0,0,0.12);
-                font-family:'Plus Jakarta Sans',Arial,sans-serif;font-size:13px;color:#374151;">
-      <div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:12px;">Klaster UMKM Jawa Barat</div>
-      <div style="margin-bottom:8px;"><span style="background:#FF5C8D;width:12px;height:12px;display:inline-block;border-radius:3px;margin-right:8px;vertical-align:middle;"></span>Klaster 1 — Siap Scale-Up</div>
-      <div style="margin-bottom:8px;"><span style="background:#732553;width:12px;height:12px;display:inline-block;border-radius:3px;margin-right:8px;vertical-align:middle;"></span>Klaster 2 — Tumbuh Butuh Fondasi</div>
-      <div style="margin-bottom:8px;"><span style="background:#85A3B2;width:12px;height:12px;display:inline-block;border-radius:3px;margin-right:8px;vertical-align:middle;"></span>Klaster 3 — Padat Tapi Jenuh</div>
-      <div><span style="background:#D3D3D3;width:12px;height:12px;display:inline-block;border-radius:3px;margin-right:8px;vertical-align:middle;"></span>Data tidak tersedia</div>
-    </div>"""
-    m.get_root().html.add_child(folium.Element(legend_html))
-    return m._repr_html_()
-
 
 # ─────────────────────────────────────────────────────────────
 # HELPER
@@ -307,17 +271,11 @@ def plotly_base(fig, height=380, show_legend=True, margin=None):
     return fig
 
 
-def kpi_card(col, emoji, bg, label, value, sub, gradient=False):
-    bg_css = (
-        f"linear-gradient(135deg, {bg}22 0%, #FFFFFF 65%)"
-        if gradient else "#FFFFFF"
-    )
-    border_css = f"border-color:{bg}50;" if gradient else ""
+def kpi_card(col, bg, label, value, sub):
     col.markdown(f"""
-    <div class="kpi-card" style="background:{bg_css};{border_css}">
-        <div class="kpi-icon" style="background:{bg}18;">{emoji}</div>
+    <div class="kpi-card">
         <div class="kpi-label">{label}</div>
-        <div class="kpi-value">{value}</div>
+        <div class="kpi-value" style="color:{bg};">{value}</div>
         <div class="kpi-sub">{sub}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -441,10 +399,10 @@ else:
     top_kab, top_val = "–", 0
 
 c1, c2, c3, c4 = st.columns(4, gap="small")
-kpi_card(c1, "🏪", "#FF5C8D", "Total UMKM", f"{total_umkm:,}", f"{n_kab} kab/kota · tahun {tahun_range[1]}", gradient=True)
-kpi_card(c2, "📈", "#732553", "Rata-Rata Pertumbuhan", f"{avg_tumbuh:.1f}%", f"Periode {tahun_range[0]}–{tahun_range[1]}", gradient=True)
-kpi_card(c3, "💰", "#85A3B2", "Rata-Rata Daya Beli", f"Rp {avg_daya:,.0f}", "Pengeluaran per kapita (ribu Rp)")
-kpi_card(c4, "🏆", "#142030", "UMKM Terbanyak", top_kab, f"{top_val:,} UMKM")
+kpi_card(c1, "#FF5C8D", "Total UMKM", f"{total_umkm:,}", f"{n_kab} kab/kota · tahun {tahun_range[1]}")
+kpi_card(c2, "#732553", "Rata-Rata Pertumbuhan", f"{avg_tumbuh:.1f}%", f"Periode {tahun_range[0]}–{tahun_range[1]}")
+kpi_card(c3, "#85A3B2", "Rata-Rata Daya Beli", f"Rp {avg_daya:,.0f}", "Pengeluaran per kapita (ribu Rp)")
+kpi_card(c4, "#142030", "UMKM Terbanyak", top_kab, f"{top_val:,} UMKM")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -507,11 +465,12 @@ st.markdown("<br>", unsafe_allow_html=True)
 # SCATTER KLASTER + PROFIL KLASTER
 # ─────────────────────────────────────────────────────────────
 
+section("Sebaran & Profil Klaster UMKM",
+        "Kepadatan vs Daya Beli per kab/kota · ukuran bubble ∝ pertumbuhan · hover untuk detail lengkap")
+
 col_l, col_r = st.columns([3, 2], gap="large")
 
 with col_l:
-    section("Sebaran Klaster UMKM",
-            "Kepadatan vs Daya Beli · ukuran bubble ∝ pertumbuhan · hover untuk detail")
 
     df_sc = df_2023.dropna(subset=["cluster"]).copy()
     df_sc["klaster_str"] = df_sc["cluster"].map(
@@ -560,7 +519,7 @@ with col_l:
     st.plotly_chart(fig_sc, use_container_width=True)
 
 with col_r:
-    section("Profil per Klaster", "Rata-rata indikator utama")
+    st.markdown('<p class="sec-title" style="margin-bottom:16px;">Profil &amp; Rekomendasi per Klaster</p>', unsafe_allow_html=True)
 
     prof = cluster_pro.reset_index()
     prof.columns = ["cluster", "Kepadatan\n/1.000", "Pertumbuhan (%)", "Daya Beli"]
@@ -690,26 +649,62 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────
-# PETA CHOROPLETH
+# PETA SEBARAN
 # ─────────────────────────────────────────────────────────────
 
 section("Peta Sebaran Klaster Jawa Barat",
-        "Setiap kabupaten/kota diwarnai sesuai klaster hasil K-Means — hover untuk nama wilayah")
+        "Ukuran bubble ∝ jumlah UMKM · warna = klaster · hover untuk detail")
 
-with st.spinner("Memuat peta..."):
-    map_html = build_map_html(clean_2023.to_json(orient="records"))
+df_map = df_2023.dropna(subset=["cluster"]).copy()
+df_map["lat"] = df_map["nama_kabupaten_kota"].map(
+    lambda x: COORDS_JABAR.get(str(x).upper(), (None, None))[0]
+)
+df_map["lon"] = df_map["nama_kabupaten_kota"].map(
+    lambda x: COORDS_JABAR.get(str(x).upper(), (None, None))[1]
+)
+df_map = df_map.dropna(subset=["lat", "lon"])
+df_map["klaster_str"] = df_map["cluster"].map(
+    lambda x: f"Klaster {int(x)} — {CLUSTER_LABELS.get(int(x), '')}"
+)
 
-if map_html is None:
-    fallback = "output/visualizations/peta_klaster_jabar.html"
-    if os.path.exists(fallback):
-        with open(fallback, "r", encoding="utf-8") as f:
-            map_html = f.read()
-        st.caption("Peta dimuat dari file lokal (koneksi internet tidak tersedia).")
-    else:
-        st.warning("Peta tidak tersedia. Aktifkan koneksi internet atau jalankan `05_visualize.py` dulu.")
+color_map_peta = {
+    f"Klaster {k} — {CLUSTER_LABELS.get(k, '')}": v for k, v in CLUSTER_COLORS.items()
+}
 
-if map_html:
-    components.html(map_html, height=520, scrolling=False)
+fig_peta = px.scatter_mapbox(
+    df_map,
+    lat="lat", lon="lon",
+    color="klaster_str",
+    size="jumlah_umkm",
+    size_max=55,
+    hover_name="nama_short",
+    color_discrete_map=color_map_peta,
+    zoom=7.2,
+    center={"lat": -7.0, "lon": 107.6},
+    mapbox_style="open-street-map",
+    custom_data=["nama_short", "klaster_str", "jumlah_umkm",
+                 "kepadatan_per_1000", "daya_beli", "sektor_dominan"],
+    labels={"klaster_str": "Klaster"},
+)
+fig_peta.update_traces(
+    marker_opacity=0.80,
+    hovertemplate=(
+        "<b>%{customdata[0]}</b><br>"
+        "<span style='color:#6B7280'>%{customdata[1]}</span><br><br>"
+        "Jumlah UMKM: <b>%{customdata[2]:,}</b><br>"
+        "Kepadatan: <b>%{customdata[3]:.1f}</b> per 1.000<br>"
+        "Daya Beli: <b>Rp %{customdata[4]:,.0f}</b><br>"
+        "Sektor: %{customdata[5]}"
+        "<extra></extra>"
+    ),
+)
+plotly_base(fig_peta, height=540, margin=dict(l=0, r=0, t=0, b=0))
+fig_peta.update_layout(legend=dict(
+    orientation="v", yanchor="top", y=0.97, xanchor="left", x=0.01,
+    bgcolor="rgba(255,255,255,0.9)", borderwidth=1, bordercolor="#E8EAED",
+    font_size=12,
+))
+st.plotly_chart(fig_peta, use_container_width=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
