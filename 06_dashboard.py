@@ -112,26 +112,32 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,opsz,wght@0,8..18,300..800;1,8..18,300..800&display=swap');
 
-html, body, [class*="css"], .stMarkdown, p, span, div,
-button, input, label, select, textarea,
-h1, h2, h3, h4, h5, h6,
+/* Apply Plus Jakarta Sans ke teks biasa — JANGAN ke span/div agar icon Material Symbols tidak ikut tertimpa */
+body, html { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+p, h1, h2, h3, h4, h5, h6,
+label, input, select, textarea,
+button:not([class*="material"]),
+.stMarkdown, .stCaption, .stText,
 [data-testid="stMetricValue"],
 [data-testid="stMetricLabel"],
-[data-testid="stMetricDelta"] {
+[data-testid="stMetricDelta"],
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+.kpi-card, .rek-card, .sec-title, .sec-sub,
+.sidebar-title, .sidebar-sub, .sidebar-brand {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
 .stApp { background-color: #F7F8FA; }
 
-/* Sidebar — fixed width, no drag-to-resize */
+/* Sidebar */
 [data-testid="stSidebar"] {
     background-color: #FFFFFF;
     border-right: 1px solid #E8EAED;
-    min-width: 280px !important;
-    max-width: 280px !important;
-    width: 280px !important;
 }
 [data-testid="stSidebar"] .block-container { padding-top: 1.5rem; }
+/* Sembunyikan hanya drag handle (tidak bisa resize width), collapse button tetap muncul */
 [data-testid="stSidebarResizeHandle"] { display: none !important; }
 
 .block-container {
