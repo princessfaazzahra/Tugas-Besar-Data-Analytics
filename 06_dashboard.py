@@ -287,8 +287,7 @@ def plotly_base(fig, height=380, show_legend=True, margin=None):
     """Apply shared Plotly styling."""
     m = margin or dict(l=12, r=12, t=36, b=12)
     fig.update_layout(
-        font_family="Plus Jakarta Sans",
-        font_color="#374151",
+        font=dict(family="Plus Jakarta Sans, sans-serif", color="#374151", size=12),
         plot_bgcolor="white",
         paper_bgcolor="white",
         height=height,
@@ -308,9 +307,14 @@ def plotly_base(fig, height=380, show_legend=True, margin=None):
     return fig
 
 
-def kpi_card(col, emoji, bg, label, value, sub):
+def kpi_card(col, emoji, bg, label, value, sub, gradient=False):
+    bg_css = (
+        f"linear-gradient(135deg, {bg}22 0%, #FFFFFF 65%)"
+        if gradient else "#FFFFFF"
+    )
+    border_css = f"border-color:{bg}50;" if gradient else ""
     col.markdown(f"""
-    <div class="kpi-card">
+    <div class="kpi-card" style="background:{bg_css};{border_css}">
         <div class="kpi-icon" style="background:{bg}18;">{emoji}</div>
         <div class="kpi-label">{label}</div>
         <div class="kpi-value">{value}</div>
@@ -437,8 +441,8 @@ else:
     top_kab, top_val = "–", 0
 
 c1, c2, c3, c4 = st.columns(4, gap="small")
-kpi_card(c1, "🏪", "#FF5C8D", "Total UMKM", f"{total_umkm:,}", f"{n_kab} kab/kota · tahun {tahun_range[1]}")
-kpi_card(c2, "📈", "#732553", "Rata-Rata Pertumbuhan", f"{avg_tumbuh:.1f}%", f"Periode {tahun_range[0]}–{tahun_range[1]}")
+kpi_card(c1, "🏪", "#FF5C8D", "Total UMKM", f"{total_umkm:,}", f"{n_kab} kab/kota · tahun {tahun_range[1]}", gradient=True)
+kpi_card(c2, "📈", "#732553", "Rata-Rata Pertumbuhan", f"{avg_tumbuh:.1f}%", f"Periode {tahun_range[0]}–{tahun_range[1]}", gradient=True)
 kpi_card(c3, "💰", "#85A3B2", "Rata-Rata Daya Beli", f"Rp {avg_daya:,.0f}", "Pengeluaran per kapita (ribu Rp)")
 kpi_card(c4, "🏆", "#142030", "UMKM Terbanyak", top_kab, f"{top_val:,} UMKM")
 
@@ -481,6 +485,17 @@ fig_tren.update_traces(
     ),
 )
 plotly_base(fig_tren, height=360)
+
+# Gradient area fill di bawah tiap line
+vivid = px.colors.qualitative.Vivid
+for i, trace in enumerate(fig_tren.data):
+    hex_c = vivid[i % len(vivid)]
+    try:
+        r, g, b = int(hex_c[1:3], 16), int(hex_c[3:5], 16), int(hex_c[5:7], 16)
+        trace.update(fill="tozeroy", fillcolor=f"rgba({r},{g},{b},0.07)")
+    except Exception:
+        pass
+
 fig_tren.update_xaxes(tickmode="linear", dtick=1)
 fig_tren.update_yaxes(tickformat=",")
 st.plotly_chart(fig_tren, use_container_width=True)
