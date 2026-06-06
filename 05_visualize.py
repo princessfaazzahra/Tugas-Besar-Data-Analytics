@@ -43,10 +43,10 @@ os.makedirs(FOLDER_OUTPUT, exist_ok=True)
 
 # Palet warna klaster — konsisten di semua chart
 CLUSTER_COLORS = {
-    1: "#1D9E75",   # Hijau  — Siap scale-up
-    2: "#378ADD",   # Biru   — Tumbuh butuh fondasi
-    3: "#EF9F27",   # Amber  — Padat tapi jenuh
-    4: "#888780",   # Abu    — Perlu fondasi dulu (jika K=4)
+    1: "#FF5C8D",   # Stellar Strawberry — Siap scale-up
+    2: "#85A3B2",   # Grauzone           — Tumbuh butuh fondasi
+    3: "#732553",   # Pico Eggplant      — Padat tapi jenuh
+    4: "#E9D8C8",   # Siesta Tan         — Perlu fondasi dulu
 }
 
 CLUSTER_LABELS = {
@@ -57,10 +57,10 @@ CLUSTER_LABELS = {
 }
 
 CLUSTER_COLORS_MAP = {
-    1: "#1D9E75",
-    2: "#378ADD",
-    3: "#EF9F27",
-    4: "#888780",
+    1: "#FF5C8D",
+    2: "#85A3B2",
+    3: "#732553",
+    4: "#E9D8C8",
 }
 
 

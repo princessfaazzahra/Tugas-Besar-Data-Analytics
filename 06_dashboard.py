@@ -26,11 +26,15 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────
 
 CLUSTER_COLORS = {
-    1: "#1D9E75",
-    2: "#378ADD",
-    3: "#EF9F27",
-    4: "#888780",
+    1: "#FF5C8D",  # Stellar Strawberry — Siap Scale-Up
+    2: "#85A3B2",  # Grauzone          — Tumbuh Butuh Fondasi
+    3: "#732553",  # Pico Eggplant     — Padat Tapi Jenuh
+    4: "#E9D8C8",  # Siesta Tan        — Perlu Fondasi Dulu
 }
+
+BG_OUTER = "#142030"  # Hëi Sê Black
+BG_PLOT  = "#1E3442"  # Blue Whale
+TEXT_CLR = "#E9D8C8"  # Siesta Tan
 
 CLUSTER_LABELS = {
     1: "Siap Scale-Up",
@@ -92,28 +96,32 @@ def chart_bar(cluster_profile):
     offsets      = np.linspace(-(n_clusters - 1) / 2, (n_clusters - 1) / 2, n_clusters) * width
 
     fig, ax = plt.subplots(figsize=(12, 6))
-    fig.patch.set_facecolor("#FAFAFA")
-    ax.set_facecolor("#FAFAFA")
+    fig.patch.set_facecolor(BG_OUTER)
+    ax.set_facecolor(BG_PLOT)
 
     for i, (cid, row) in enumerate(cluster_profile.iterrows()):
         vals  = [row.get(m, 0) for m in metrics]
         color = CLUSTER_COLORS.get(cid, "#CCCCCC")
         label = CLUSTER_LABELS_FULL.get(cid, f"Klaster {cid}")
         bars  = ax.bar(x + offsets[i], vals, width, label=label,
-                       color=color, alpha=0.88, edgecolor="white", linewidth=0.8, zorder=3)
+                       color=color, alpha=0.90, edgecolor=BG_OUTER, linewidth=0.8, zorder=3)
         for bar, val in zip(bars, vals):
             ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
-                    f"{val:.1f}", ha="center", va="bottom", fontsize=8, color="#333333")
+                    f"{val:.1f}", ha="center", va="bottom", fontsize=8, color=TEXT_CLR)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels_short, fontsize=10)
-    ax.set_ylabel("Nilai Rata-Rata", fontsize=10)
+    ax.set_xticklabels(labels_short, fontsize=10, color=TEXT_CLR)
+    ax.set_ylabel("Nilai Rata-Rata", fontsize=10, color=TEXT_CLR)
     ax.set_title("Profil Rata-Rata Indikator per Klaster UMKM — Jawa Barat 2019–2023",
-                 fontsize=13, fontweight="bold", pad=14)
-    ax.legend(loc="upper right", framealpha=0.9, fontsize=8)
-    ax.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
+                 fontsize=13, fontweight="bold", pad=14, color=TEXT_CLR)
+    ax.tick_params(colors=TEXT_CLR)
+    ax.legend(loc="upper right", framealpha=0.3, fontsize=8,
+              facecolor=BG_PLOT, labelcolor=TEXT_CLR, edgecolor="#85A3B2")
+    ax.yaxis.grid(True, linestyle="--", alpha=0.2, color=TEXT_CLR, zorder=0)
     ax.set_axisbelow(True)
-    ax.spines[["top", "right"]].set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#85A3B2")
+        spine.set_alpha(0.4)
     plt.tight_layout()
     return fig
 
@@ -131,36 +139,39 @@ def chart_radar(cluster_profile):
         df_norm[col] = (df_norm[col] - cmin) / (cmax - cmin) if cmax > cmin else 0.5
 
     fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
-    fig.patch.set_facecolor("#FAFAFA")
-    ax.set_facecolor("#FAFAFA")
+    fig.patch.set_facecolor(BG_OUTER)
+    ax.set_facecolor(BG_PLOT)
     ax.set_theta_offset(math.pi / 2)
     ax.set_theta_direction(-1)
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels_short, fontsize=10)
+    ax.set_xticklabels(labels_short, fontsize=10, color=TEXT_CLR)
     ax.set_ylim(0, 1)
     ax.set_yticks([0.25, 0.5, 0.75, 1.0])
-    ax.set_yticklabels(["25%", "50%", "75%", "100%"], fontsize=7, color="#999999")
-    ax.yaxis.grid(True, linestyle="--", alpha=0.4)
-    ax.xaxis.grid(True, linestyle="--", alpha=0.3)
+    ax.set_yticklabels(["25%", "50%", "75%", "100%"], fontsize=7, color="#85A3B2")
+    ax.yaxis.grid(True, linestyle="--", alpha=0.2, color=TEXT_CLR)
+    ax.xaxis.grid(True, linestyle="--", alpha=0.2, color=TEXT_CLR)
+    ax.spines["polar"].set_edgecolor("#85A3B2")
+    ax.spines["polar"].set_alpha(0.4)
 
     for cid, row in df_norm.iterrows():
         vals   = row[metrics].tolist() + [row[metrics[0]]]
         color  = CLUSTER_COLORS.get(cid, "#CCCCCC")
         label  = CLUSTER_LABELS_FULL.get(cid, f"Klaster {cid}")
         ax.plot(angles, vals, "o-", linewidth=2, color=color, label=label)
-        ax.fill(angles, vals, alpha=0.12, color=color)
+        ax.fill(angles, vals, alpha=0.18, color=color)
 
     ax.set_title("Radar Chart — Profil Klaster UMKM\n(Nilai dinormalisasi 0–1)",
-                 fontsize=12, fontweight="bold", pad=28)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.15), fontsize=8, framealpha=0.9)
+                 fontsize=12, fontweight="bold", pad=28, color=TEXT_CLR)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.15), fontsize=8,
+              framealpha=0.3, facecolor=BG_PLOT, labelcolor=TEXT_CLR, edgecolor="#85A3B2")
     plt.tight_layout()
     return fig
 
 
 def chart_scatter(clean_2023):
     fig, ax = plt.subplots(figsize=(11, 7))
-    fig.patch.set_facecolor("#FAFAFA")
-    ax.set_facecolor("#FAFAFA")
+    fig.patch.set_facecolor(BG_OUTER)
+    ax.set_facecolor(BG_PLOT)
 
     for cid in sorted(clean_2023["cluster"].dropna().unique()):
         sub   = clean_2023[clean_2023["cluster"] == cid]
@@ -168,8 +179,8 @@ def chart_scatter(clean_2023):
         label = CLUSTER_LABELS_FULL.get(int(cid), f"Klaster {cid}")
         sizes = np.clip(np.abs(sub["pertumbuhan_pct"].fillna(0)) * 8 + 40, 30, 350)
         ax.scatter(sub["kepadatan_per_1000"], sub["daya_beli"],
-                   s=sizes, c=color, alpha=0.78,
-                   edgecolors="white", linewidths=0.6, label=label, zorder=3)
+                   s=sizes, c=color, alpha=0.88,
+                   edgecolors=BG_OUTER, linewidths=0.8, label=label, zorder=3)
 
     highlight = ["KOTA BANDUNG", "KABUPATEN BOGOR", "KABUPATEN GARUT",
                  "KOTA BEKASI", "KABUPATEN SUKABUMI"]
@@ -178,17 +189,21 @@ def chart_scatter(clean_2023):
             nama = str(row["nama_kabupaten_kota"]).title().replace("Kabupaten", "Kab.")
             ax.annotate(nama, xy=(row["kepadatan_per_1000"], row["daya_beli"]),
                         xytext=(6, 4), textcoords="offset points", fontsize=7.5,
-                        color="#333333",
-                        arrowprops=dict(arrowstyle="-", color="#BBBBBB", lw=0.8))
+                        color=TEXT_CLR,
+                        arrowprops=dict(arrowstyle="-", color="#85A3B2", lw=0.8))
 
-    ax.set_xlabel("Kepadatan UMKM per 1.000 Penduduk", fontsize=10)
-    ax.set_ylabel("Daya Beli (Pengeluaran per Kapita, ribu Rp)", fontsize=10)
+    ax.set_xlabel("Kepadatan UMKM per 1.000 Penduduk", fontsize=10, color=TEXT_CLR)
+    ax.set_ylabel("Daya Beli (Pengeluaran per Kapita, ribu Rp)", fontsize=10, color=TEXT_CLR)
     ax.set_title("Scatter Plot Klaster — Kepadatan vs Daya Beli\n(Ukuran bubble ∝ Pertumbuhan UMKM %)",
-                 fontsize=12, fontweight="bold", pad=14)
-    ax.legend(loc="upper left", framealpha=0.9, fontsize=8)
-    ax.yaxis.grid(True, linestyle="--", alpha=0.4, zorder=0)
-    ax.xaxis.grid(True, linestyle="--", alpha=0.4, zorder=0)
-    ax.spines[["top", "right"]].set_visible(False)
+                 fontsize=12, fontweight="bold", pad=14, color=TEXT_CLR)
+    ax.tick_params(colors=TEXT_CLR)
+    ax.legend(loc="upper left", framealpha=0.3, fontsize=8,
+              facecolor=BG_PLOT, labelcolor=TEXT_CLR, edgecolor="#85A3B2")
+    ax.yaxis.grid(True, linestyle="--", alpha=0.2, color=TEXT_CLR, zorder=0)
+    ax.xaxis.grid(True, linestyle="--", alpha=0.2, color=TEXT_CLR, zorder=0)
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#85A3B2")
+        spine.set_alpha(0.4)
     plt.tight_layout()
     return fig
 
