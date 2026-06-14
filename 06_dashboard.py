@@ -136,7 +136,7 @@ button:not([class*="material"]),
     background-color: #FFFFFF;
     border-right: 1px solid #E8EAED;
 }
-[data-testid="stSidebar"] .block-container { padding-top: 1.5rem; }
+[data-testid="stSidebar"] .block-container { padding-top: 0.55rem !important; }
 /* Sembunyikan hanya drag handle (tidak bisa resize width), collapse button tetap muncul */
 [data-testid="stSidebarResizeHandle"] { display: none !important; }
 
@@ -198,9 +198,23 @@ button:not([class*="material"]),
 
 /* Sidebar brand */
 .sidebar-brand {
-    padding: 4px 0 20px;
+    padding: 0 0 18px;
     border-bottom: 1px solid #E8EAED;
     margin-bottom: 20px;
+}
+.sidebar-brand-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+.sidebar-logo {
+    width: 38px;
+    height: 46px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+.sidebar-copy {
+    min-width: 0;
 }
 .sidebar-title {
     font-size: 18px; font-weight: 800;
@@ -362,8 +376,17 @@ n_clusters = int(clean_df["cluster"].nunique())
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-brand">
-        <div class="sidebar-title">UMKM Jawa Barat</div>
-        <div class="sidebar-sub">Segmentasi &amp; Analitik Wilayah</div>
+        <div class="sidebar-brand-row">
+            <img
+                class="sidebar-logo"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Coat_of_arms_of_West_Java.svg/250px-Coat_of_arms_of_West_Java.svg.png"
+                alt="Logo Jawa Barat"
+            />
+            <div class="sidebar-copy">
+                <div class="sidebar-title">UMKM Jawa Barat</div>
+                <div class="sidebar-sub">Segmentasi &amp; Analitik Wilayah</div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
